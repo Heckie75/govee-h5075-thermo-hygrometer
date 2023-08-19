@@ -1,0 +1,35 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "govee device info",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args": ["-i", "A4:C1:38:68:41:23"],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "govee scan",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args": ["-s"],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "govee data",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args": ["-d", "Wohnz", "-j", "--start", "479:59", "--end", "00:01"],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        }
+    ]
+}
