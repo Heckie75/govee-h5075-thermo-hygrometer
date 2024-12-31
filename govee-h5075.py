@@ -12,6 +12,51 @@ from datetime import datetime, timedelta
 from bleak import AdvertisementData, BleakClient, BleakScanner, BLEDevice
 
 
+class MyLogger():
+
+    LEVELS = {
+        "DEBUG": 0,
+        "INFO": 1,
+        "WARN": 2,
+        "ERROR": 3
+    }
+
+    NAMES = ["DEBUG", "INFO", "WARN", "ERROR"]
+
+    def __init__(self, level: int) -> None:
+
+        self.level = level
+
+    def error(self, s: str):
+
+        self.log(MyLogger.LEVELS["ERROR"], s)
+
+    def warning(self, s: str):
+
+        self.log(MyLogger.LEVELS["WARN"], s)
+
+    def info(self, s: str):
+
+        self.log(MyLogger.LEVELS["INFO"], s)
+
+    def debug(self, s: str):
+
+        self.log(MyLogger.LEVELS["DEBUG"], s)
+
+    def log(self, level: int, s: str):
+
+        if level >= self.level:
+            print(f"{MyLogger.NAMES[level]}\t{s}", file=sys.stderr, flush=True)
+
+    @staticmethod
+    def hexstr(ba: bytearray) -> str:
+
+        return " ".join([("0" + hex(b).replace("0x", ""))[-2:] for b in ba])
+
+
+LOGGER = MyLogger(level=MyLogger.LEVELS["WARN"])
+
+
 class Measurement():
 
     def __init__(self, timestamp: datetime, temperatureC: float, relHumidity: float) -> None:
@@ -156,15 +201,25 @@ class GoveeThermometerHygrometer():
 
     async def connect(self) -> None:
 
-        async def notification_handler_device(c, bytes: bytearray) -> None:
+        async def notification_handler_device(device: BLEDevice, bytes: bytearray) -> None:
+
+            LOGGER.debug(f"{self._mac}: <<< received notification with device data("
+                         f"{MyLogger.hexstr(bytes)})")
 
             if bytes[0] == 0xaa and bytes[1] == 0x0e:
                 self._buffer["FIRMWARE"] = bytes[2:9].decode()
+                LOGGER.info(f'{self._mac}: received firmware version: '
+                            f'{self._buffer["FIRMWARE"]}')
 
             elif bytes[0] == 0xaa and bytes[1] == 0x0d:
                 self._buffer["HARDWARE"] = bytes[2:9].decode()
+                LOGGER.info(f'{self._mac}: received hardware version: '
+                            f'{self._buffer["HARDWARE"]}')
 
-        async def notification_handler_data(c, bytes: bytearray) -> None:
+        async def notification_handler_data(device: BLEDevice, bytes: bytearray) -> None:
+
+            LOGGER.debug(f"{self._mac}: <<< received notification with measurement data ("
+                         f"{MyLogger.hexstr(bytes)})")
 
             if not self._data_control:
                 return
@@ -180,36 +235,57 @@ class GoveeThermometerHygrometer():
                 _ba.extend(bytes[2 + 3 * i:5 + 3 * i])
                 temperatureC, relHumidity = GoveeThermometerHygrometer.decodeMeasurement(
                     bytes=_ba)
+                LOGGER.debug(f"{self._mac}: Decoded measurement data("
+                             f"{MyLogger.hexstr(_ba)}) is temperature={temperatureC}°C, humidity={relHumidity}%")
                 self._data_control.measurements.append(Measurement(
                     timestamp=timestamp, temperatureC=temperatureC, relHumidity=relHumidity))
 
             self._data_control.count()
 
-        async def notification_handler_data_control(c, bytes: bytearray) -> None:
+        async def notification_handler_data_control(device: BLEDevice, bytes: bytearray) -> None:
+
+            LOGGER.debug(f"{self._mac}: <<< received notification with measurement data ("
+                         f"{MyLogger.hexstr(bytes)})")
 
             if bytes[0] == 0x33 and bytes[1] == 0x01 and self._data_control:
+                LOGGER.info(f"{self._mac}: Data transmission starts")
                 self._data_control.status = DataControl.DATA_CONTROL_STARTED
 
             elif bytes[0] == 0xee and bytes[1] == 0x01 and self._data_control:
                 self._data_control.received_msg = struct.unpack(">H", bytes[2:4])[
                     0]
                 if self._data_control.received_msg == self._data_control.counted_msg:
+                    LOGGER.info(
+                        f"{self._mac}: Data transmission completed")
                     self._data_control.status = DataControl.DATA_CONTROL_COMPLETE
                 else:
+                    LOGGER.info(f"{self._mac}: Data transmission aborted")
                     self._data_control.status = DataControl.DATA_CONTROL_INCOMPLETE
 
+        LOGGER.info(f"{self._mac}: Request to connect")
         await self._client.connect()
 
         if self._client.is_connected:
+            LOGGER.info(f"{self._mac}: Successfully connected")
+            LOGGER.debug(f'{self._mac}: Start listening for notifications for device data (firmware / hardware) on UUID '
+                         f'{self._COMMANDS["FIRMWARE"]["UUID"]}')
             await self._client.start_notify(self._COMMANDS["FIRMWARE"]["UUID"], callback=notification_handler_device)
+            LOGGER.debug(f'{self._mac}: Start listening for notifications for data control on UUID '
+                         f'{self._COMMANDS["DATA_CONTROL"]["UUID"]}')
             await self._client.start_notify(self._COMMANDS["DATA_CONTROL"]["UUID"], callback=notification_handler_data_control)
+            LOGGER.debug(f'{self._mac}: Start listening for notifications for data on UUID '
+                         f'{self._COMMANDS["DATA"]["UUID"]}')
             await self._client.start_notify(self._COMMANDS["DATA"]["UUID"], callback=notification_handler_data)
             await asyncio.sleep(.2)
+        else:
+            LOGGER.error(f"{self._mac}: Connecting has failed")
 
     async def disconnect(self) -> None:
 
+        LOGGER.info(f"{self._mac}: Request to disconnect")
         if self._client.is_connected:
             await self._client.disconnect()
+            LOGGER.info(f"{self._mac}: Successfully disconnected")
 
     async def _sendCommand(self, command: dict, params: 'list[int]' = []) -> None:
 
@@ -224,10 +300,15 @@ class GoveeThermometerHygrometer():
 
             _bytearray.append(_checksum)
 
+        LOGGER.debug("%s: >>> write_gatt_char(%s, %s)" %
+                     (self._mac, command["UUID"], MyLogger.hexstr(_bytearray)))
+
         await self._client.write_gatt_char(command["UUID"], _bytearray, response=True)
 
     async def requestRecordedData(self, start: int, end: int) -> 'list[Measurement]':
 
+        LOGGER.info(f"{self._mac}: request recorded measurements from "
+                    f"{start} to {end} minutes in the past")
         if not self._client.is_connected:
             self.connect()
 
@@ -246,6 +327,9 @@ class GoveeThermometerHygrometer():
 
     async def requestDeviceInfo(self) -> DeviceInfo:
 
+        LOGGER.info(
+            f"{self._mac}: request request device info (hardware / firmware)")
+
         self._buffer["HARDWARE"] = None
         self._buffer["FIRMWARE"] = None
 
@@ -260,11 +344,19 @@ class GoveeThermometerHygrometer():
             await asyncio.sleep(.1)
             i += 1
 
+        LOGGER.info(
+            f"{self._mac}: request device name")
+        LOGGER.debug("%s: >>> read_gatt_char(%s)" %
+                     (self._mac, self._COMMANDS["NAME"]["UUID"]))
         _name = await self._client.read_gatt_char(self._COMMANDS["NAME"]["UUID"])
         if not _name or not self._buffer["HARDWARE"] or not self._buffer["FIRMWARE"]:
             return None
 
+        LOGGER.debug("%s: <<< response data(%s)" %
+                     (self._mac, MyLogger.hexstr(_name)))
         _name = _name.decode()
+        LOGGER.info(
+            f"{self._mac}: received device name: {_name}")
 
         return DeviceInfo(macAddress=self._mac, name=_name, manufacturer=_name[:2], model=_name[2:7], hardware=self._buffer["HARDWARE"], firmware=self._buffer["FIRMWARE"])
 
@@ -297,9 +389,15 @@ class GoveeThermometerHygrometer():
                 found_devices.append(device.address)
                 if device.name and device.address.upper().startswith(GoveeThermometerHygrometer.MAC_PREFIX):
                     if 0xec88 in advertising_data.manufacturer_data:
+                        LOGGER.debug(
+                            f"{device.address} ({device.name}): Received advertisement data({MyLogger.hexstr(advertising_data.manufacturer_data[0xec88])})")
                         temperatureC, relHumidity = GoveeThermometerHygrometer.decodeMeasurement(
                             advertising_data.manufacturer_data[0xec88][0:4])
+                        LOGGER.debug(f"{device.address}: Decoded measurement data("
+                                     f"{MyLogger.hexstr(advertising_data.manufacturer_data[0xec88][0:4])}) is temperature={temperatureC}°C, humidity={relHumidity}%")
                         battery = advertising_data.manufacturer_data[0xec88][4]
+                        LOGGER.debug(f"{device.address}: Decoded battery data("
+                                     f"{hex(advertising_data.manufacturer_data[0xec88][4])}) is {battery}%")
                         measurement = Measurement(timestamp=datetime.now(),
                                                   temperatureC=temperatureC, relHumidity=relHumidity)
 
@@ -351,8 +449,8 @@ class Alias():
 
 def arg_parse(args: 'list[str]') -> dict:
 
-    parser = argparse.ArgumentParser(prog='govee-h5075.py', description=
-        'Shell script in order to request Govee H5075 temperature humidity sensor')
+    parser = argparse.ArgumentParser(
+        prog='govee-h5075.py', description='Shell script in order to request Govee H5075 temperature humidity sensor')
     parser.add_argument(
         '-s', '--scan', help='scan for devices for 20 seconds', action='store_true')
     parser.add_argument('-m', '--measure',
@@ -367,6 +465,8 @@ def arg_parse(args: 'list[str]') -> dict:
         '--end', help='request recorded data to end time expression, e.g. 480:00 (here max. value 20 days)', type=str, default=None)
     parser.add_argument(
         '-j', '--json', help='print in JSON format', action='store_true')
+    parser.add_argument(
+        '-l', '--log', help='print logging information', choices=MyLogger.NAMES)
 
     return parser.parse_args(args)
 
@@ -444,10 +544,11 @@ async def recorded_data(label: str, start: str, end: str, _json: bool = False):
             print("Timestamp         Temperature  Dew point  Temperature  Dew point  Rel. humidity  Abs. humidity  Steam pressure", flush=True)
             for m in measurements:
                 timestamp = m.timestamp.strftime("%Y-%m-%d %H:%M")
-                print(f"{timestamp}  {m.temperatureC:.1f}°C       {m.dewPointC:.1f}°C     {m.temperatureF:.1f}°F       {m.dewPointF:.1f}°F     {m.relHumidity:.1f}%          {m.absHumidity:.1f} g/m³      {m.steamPressure:.1f} mbar", flush=True)
+                print(f"{timestamp}  {m.temperatureC:.1f}°C       {m.dewPointC:.1f}°C     {m.temperatureF:.1f}°F       "
+                      f"{m.dewPointF:.1f}°F     {m.relHumidity:.1f}%          {m.absHumidity:.1f} g/m³      {m.steamPressure:.1f} mbar", flush=True)
 
     except Exception as e:
-        print(e, file=sys.stderr)
+        LOGGER.error(f"An exception has occured: {str(e)}")
 
     finally:
         await device.disconnect()
@@ -462,6 +563,10 @@ if __name__ == '__main__':
 
         else:
             args = arg_parse(sys.argv[1:])
+
+            if args.log:
+                LOGGER.level = MyLogger.NAMES.index(args.log)
+
             if args.scan:
                 scan()
 
@@ -470,7 +575,8 @@ if __name__ == '__main__':
             elif args.info:
                 asyncio.run(device_info(label=args.info, _json=args.json))
             elif args.data:
-                asyncio.run(recorded_data(label=args.data, start=args.start, end=args.end, _json=args.json))
+                asyncio.run(recorded_data(label=args.data,
+                            start=args.start, end=args.end, _json=args.json))
 
     except KeyboardInterrupt:
         pass

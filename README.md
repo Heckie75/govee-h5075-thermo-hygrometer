@@ -12,7 +12,7 @@ $ pip install bleak
 ## Help
 ```
 $ ./govee-h5075.py --help
-usage: govee-h5075.py [-h] [-s] [-m] [-i INFO] [-d DATA] [--start START] [--end END] [-j]
+usage: govee-h5075.py [-h] [-s] [-m] [-i INFO] [-d DATA] [--start START] [--end END] [-j] [-l {DEBUG,INFO,WARN,ERROR}]
 
 Shell script in order to request Govee H5075 temperature humidity sensor
 
@@ -25,6 +25,8 @@ options:
   --start START         request recorded data from start time expression, e.g. 480:00 (here max. value 20 days)
   --end END             request recorded data to end time expression, e.g. 480:00 (here max. value 20 days)
   -j, --json            print in JSON format
+  -l {DEBUG,INFO,WARN,ERROR}, --log {DEBUG,INFO,WARN,ERROR}
+                        print logging information
 ```
 
 ## Scan for nearby devices and grab measurement
