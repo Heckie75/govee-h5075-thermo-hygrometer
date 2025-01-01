@@ -1,19 +1,78 @@
-## Get version (firmware)
+# Request device information and configuration
 ```
-[A4:C1:38:68:41:23][LE]> char-write-req 0x11 aa0e0000000000000000000000000000000000a4
-Notification handle = 0x0011 value:          aa 0e 31 2e 30 34 2e 30 36 00 00 00 00 00 00 00 00 00 00 97
-                                                   ^------------------^ Ascii of version here: 1.04.06
+uuid: 494e5445-4c4c-495f-524f-434b535f2011
+handle: 0x11
+```
+
+## Request alarm for humidity (command aa03)
+```
+[A4:C1:38:5A:20:A1][LE]> char-write-req 0x11 aa030000000000000000000000000000000000a9
+Notification handle = 0x0011 value: aa 03 01 b8 0b 4c 1d 00 00 00 00 00 00 00 00 00 00 00 00 4a
+                                          |  |     + upper limit, here 0x1d4c -> 7500 -> 7500 / 100 = 75.00%
+                                          |  + lower limit, here 0x0bb8 -> 3000 -> 3000 / 100 = 30.00%
+                                          + flag for on (0x01) and off (0x00)
 Characteristic value was written successfully
 ```
 
-Example code:
-```python
->>> chr(0x31)+chr(0x2e)+chr(0x30)+chr(0x34)+chr(0x2e)+chr(0x30)+chr(0x36)  
-'1.04.06'
+## Request alarm for temperature (command aa04)
+```
+[A4:C1:38:5A:20:A1][LE]> char-write-req 0x11 aa040000000000000000000000000000000000ae
+Notification handle = 0x0011 value: aa 04 01 dc 05 fc 08 00 00 00 00 00 00 00 00 00 00 00 00 82
+                                          |  |     + upper limit, here 0x08fc -> 2300 -> 2300 / 100 = 23.0°C
+                                          |  + lower limit, here 0x05dc -> 1500 -> 1500 / 100 = 15.0°C
+                                          + flag for on (0x01) and off (0x00)
+Characteristic value was written successfully
 ```
 
+## Request current calibration for humidity (command aa06)
+```
+[A4:C1:38:68:41:23][LE]> char-write-req 0x11 aa060000000000000000000000000000000000ac
+Notification handle = 0x0011 value: aa 06 f6 ff 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 a5
+                                          +---+ 0xfff6 (=65386) => 0xfff6 - 2^16 = -10 (-0.1%)
+Characteristic value was written successfully
+```
 
-## Get hardware version
+Range is from -20.0% to 20% in steps of 0.1%
+* min: 0xf830 (=63536) => 0xf830 - 2^16 = -2000 (-20.00%)
+* zero: 0x0000 => 0.0%
+* max: 0x012c => 300 (3.00°C)
+
+## Request current calibration for temperature (command aa07)
+```
+[A4:C1:38:68:41:23][LE]> char-write-req 0x11 aa070000000000000000000000000000000000ad
+Notification handle = 0x0011 value: aa 07 0a 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 a7
+                                          +---+ 0x000a (=10) => 10 (0.1°C)
+Characteristic value was written successfully
+```
+
+Range is from -3.0°C to 3.0°C in steps of 0.1°C
+* min: 0xfed4 (=65236) => 0xfed4 - 2^16 = -300 (-3.0°C)
+* zero: 0x0000 => 0.0°C
+* max: 0x012c => 300 (3.00°C)
+
+## Request battery level (command aa08)
+```
+[A4:C1:38:5A:20:A1][LE]> char-write-req 0x11 aa080000000000000000000000000000000000a2
+Notification handle = 0x0011 value: aa 08 25 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 87
+                                          + 0x25 -> 37%
+Characteristic value was written successfully
+```
+
+## Request MAC address (command aa0c)
+```
+[A4:C1:38:5A:20:A1][LE]> char-write-req 0x11 aa0c0000000000000000000000000000000000a6
+Notification handle = 0x0011 value: aa 0c a1 20 5a 38 c1 a4 e8 10 00 00 00 00 00 00 00 00 00 d8
+                                          |               | +---+ unknown
+                                          +---------------+ MAC address in reverse order, here: A4:C1:38:5A:20:A1
+
+Notification handle = 0x0011 value: aa 0c 23 41 68 38 c1 a4 b8 5f 00 00 00 00 00 00 00 00 00 16
+
+Notification handle = 0x0011 value: aa 0c dd 1d 3b 38 c1 a4 e0 40 00 00 00 00 00 00 00 00 00 a0
+
+Characteristic value was written successfully
+```
+
+## Get hardware version (command aa0d)
 ```
 [A4:C1:38:68:41:23][LE]> char-write-req 0x11 aa0d0000000000000000000000000000000000a7
 Notification handle = 0x0011 value: aa 0d 31 2e 30 33 2e 30 32 00 00 00 00 00 00 00 00 00 00 97
@@ -27,6 +86,73 @@ Example code:
 '1.03.02'
 ```
 
+## Get version (firmware) (command aa0e)
+```
+[A4:C1:38:68:41:23][LE]> char-write-req 0x11 aa0e0000000000000000000000000000000000a4
+Notification handle = 0x0011 value:          aa 0e 31 2e 30 34 2e 30 36 00 00 00 00 00 00 00 00 00 00 97
+                                                   ^------------------^ Ascii of version here: 1.04.06
+Characteristic value was written successfully
+```
+
+Example code:
+```python
+>>> chr(0x31)+chr(0x2e)+chr(0x30)+chr(0x34)+chr(0x2e)+chr(0x30)+chr(0x36)
+'1.04.06'
+```
+
+# Calibration
+```
+uuid: 494e5445-4c4c-495f-524f-434b535f2012
+handle: 0x15
+```
+
+## Calibrate temperature
+Range is from -3.0°C to 3.0°C in steps of 0.1°C
+
+```
+3307d4fe0000000000000000000000000000001e
+    +--+ 0xfed4 (=65236) => 0xfed4 - 2^16 = -300 (-3.00°C)
+
+3307000000000000000000000000000000000034
+    +--+ 0.0°C
+	
+33072c010000000000000000000000000000001e
+    +---+ 0x012c => 300 (3.00°C)
+```
+
+## Calibrate humidity
+Range is from -20.0% to 20% in steps of 0.1%
+
+```
+330630f8000000000000000000000000000000fd
+    +--+ 0xf830 (=63536) => 0xf830 - 2^16 = -2000 (-20.00%)
+
+3306000000000000000000000000000000000035
+    +--+ 0.00%
+```
+
+# Measurements
+Data control:
+```
+uuid: 494e5445-4c4c-495f-524f-434b535f2012
+handle 0x15
+```
+
+Data transmission (notification for historical data):
+```
+uuid: 494e5445-4c4c-495f-524f-434b535f2013
+handle: 0x19
+```
+
+## request current measurement
+```
+[A4:C1:38:5A:20:A1][LE]> char-write-req 0x15 aa010000000000000000000000000000000000ab
+Notification handle = 0x0015 value: aa 01 08 65 12 5d 25 00 00 00 00 00 00 00 00 00 00 00 00 ac
+                                          |     |     + current battery level, here 0x25 -> 37%
+                                          |     + current humidity, here 0x125d -> 4701 / 100 = 47.01%
+                                          + current temperature, here 0x0865 -> 2149 / 100 = 21.49°C
+Characteristic value was written successfully
+```
 
 ## request historical data 
 Max 20 days (or 28,800 seconds, 0x7080)
