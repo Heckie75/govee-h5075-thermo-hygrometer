@@ -5,11 +5,29 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "govee device info",
+            "name": "govee status",
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "args": ["-i", "A4:C1:38:68:41:23"],
+            "args": ["-a", "Küche", "--status", "-j"],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "govee info",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args": ["-a", "Küche", "--info", "--log", "INFO", "-j"],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "govee config",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args": ["-a", "Küche", "--set-humidity-alarm", "on 35.0 60.0", "--set-temperature-alarm", "on -15.0 27.0", "--set-humidity-offset", "0.0", "--set-temperature-offset", "0.0", "--log", "DEBUG"],
             "console": "integratedTerminal",
             "justMyCode": true
         },
@@ -23,11 +41,20 @@
             "justMyCode": true
         },
         {
+            "name": "govee measure",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args": ["-m"],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },    
+        {
             "name": "govee data",
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "args": ["-d", "Wohnz", "-j", "--start", "479:59", "--end", "00:01"],
+            "args": ["-a", "Küche", "-d", "-j", "--start", "479:59", "--end", "00:01"],
             "console": "integratedTerminal",
             "justMyCode": true
         }

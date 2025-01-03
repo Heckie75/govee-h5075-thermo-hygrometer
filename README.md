@@ -12,16 +12,28 @@ $ pip install bleak
 ## Help
 ```
 $ ./govee-h5075.py --help
-usage: govee-h5075.py [-h] [-s] [-m] [-i INFO] [-d DATA] [--start START] [--end END] [-j] [-l {DEBUG,INFO,WARN,ERROR}]
+usage: govee-h5075.py [-h] [-a ADDRESS] [-s] [-m] [--status] [-i] [--set-humidity-alarm "<on|off> <lower> <upper>"] [--set-temperature-alarm "<on|off> <lower> <upper>"] [--set-humidity-offset <offset>] [--set-temperature-offset <offset>] [-d] [--start START] [--end END] [-j]
+                      [-l {DEBUG,INFO,WARN,ERROR}]
 
 Shell script in order to request Govee H5075 temperature humidity sensor
 
 options:
   -h, --help            show this help message and exit
+  -a ADDRESS, --address ADDRESS
+                        MAC address or alias
   -s, --scan            scan for devices for 20 seconds
   -m, --measure         capture measurements/advertisements from nearby devices
-  -i INFO, --info INFO  request device information for given mac or alias
-  -d DATA, --data DATA  request recorded data for given mac or alias
+  --status              request current temperature, humidity and battery level for given MAC address or alias
+  -i, --info            request device information and configuration for given MAC address or alias
+  --set-humidity-alarm "<on|off> <lower> <upper>"
+                        set temperature alarm. Range is from 0.0 to 100.0 in steps of 0.1, e.g. "on 30.0 75.0"
+  --set-temperature-alarm "<on|off> <lower> <upper>"
+                        set temperature alarm. Range is from -20.0 to 60.0 in steps of 0.1, e.g. "on 15.0 26.0"
+  --set-humidity-offset <offset>
+                        set offset for humidity to calibrate. Range is from -20.0 to 20.0 in steps of 0.1, e.g. -5.0
+  --set-temperature-offset <offset>
+                        set offset for temperature to calibrate. Range is from -3.0 to 3.0 in steps of 0.1, e.g. -1.0
+  -d, --data            request recorded data for given MAC address or alias
   --start START         request recorded data from start time expression, e.g. 480:00 (here max. value 20 days)
   --end END             request recorded data to end time expression, e.g. 480:00 (here max. value 20 days)
   -j, --json            print in JSON format
@@ -49,10 +61,19 @@ A4:C1:38:68:41:23     GVH5075_4123  21.9°C       14.5°C     71.4°F       58.1
 ``` 
 
 ## Put ```.known_govees```-file to your home directory
-In order to get friendly names and request device by name you can put a ```.known_govees```-file in your home directory like this:
+In order to get friendly names and request device by name you can put a ```.known_govees```-file in your home directory.
+This file is also important for calibration when receiving advertisement data while measuring and scanning since here calibration data is not taken from device configuration. This is only done when quering measurement or historical data. 
+
+The meaning of columns is as follows:
+1. column: MAC address
+2. column: Alias
+3. column: offset / calibration for humidity
+4. column: offset / calibration for temperature
+
+Example:
 ```
-A4:C1:38:68:41:23 Bedroom
-A4:C1:38:5A:20:A1 Livingroom
+A4:C1:38:68:41:23 Bedroom 0.0 0.0
+A4:C1:38:5A:20:A1 Livingroom 0.0 0.0
 ```
 
 Afterwards you'll see the alias if you scan or grab measurements instead of the MAC-address.
