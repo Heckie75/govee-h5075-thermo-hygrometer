@@ -5,11 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "govee device info",
+            "name": "govee status",
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "args": ["-i", "A4:C1:38:68:41:23"],
+            "args": ["-a", "A4:C1:38:5A:20:A1", "--status", "--log", "DEBUG"],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "govee info",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args": ["-a", "A4:C1:38:5A:20:A1", "--info", "--log", "DEBUG"],
             "console": "integratedTerminal",
             "justMyCode": true
         },
