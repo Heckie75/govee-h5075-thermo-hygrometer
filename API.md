@@ -4,6 +4,12 @@ uuid: 494e5445-4c4c-495f-524f-434b535f2011
 handle: 0x11
 ```
 
+## Unknown (command aa02)
+```
+DEBUG   A4:C1:38:5A:20:A1: >>> write_gatt_char(494e5445-4c4c-495f-524f-434b535f2011, aa 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 a8)
+DEBUG   A4:C1:38:5A:20:A1: <<< received notification with device data(aa 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 a8)
+```
+
 ## Request alarm for humidity (command aa03)
 ```
 [A4:C1:38:5A:20:A1][LE]> char-write-req 0x11 aa030000000000000000000000000000000000a9
@@ -58,6 +64,14 @@ Notification handle = 0x0011 value: aa 08 25 00 00 00 00 00 00 00 00 00 00 00 00
 Characteristic value was written successfully
 ```
 
+## Current humidity and temperature (command aa0a)
+
+humidity and temperature via this UUID
+```
+DEBUG   A4:C1:38:5A:20:A1: >>> write_gatt_char(494e5445-4c4c-495f-524f-434b535f2011, aa 0a 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 a0)
+DEBUG   A4:C1:38:5A:20:A1: <<< received notification with device data(aa 0a ae 07 a8 13 00 00 00 00 00 00 00 00 00 00 00 00 00 b2)
+```
+
 ## Request MAC address (command aa0c)
 ```
 [A4:C1:38:5A:20:A1][LE]> char-write-req 0x11 aa0c0000000000000000000000000000000000a6
@@ -98,6 +112,12 @@ Example code:
 ```python
 >>> chr(0x31)+chr(0x2e)+chr(0x30)+chr(0x34)+chr(0x2e)+chr(0x30)+chr(0x36)
 '1.04.06'
+```
+
+## Get MAC address (command aa0f)
+```
+DEBUG   A4:C1:38:5A:20:A1: >>> write_gatt_char(494e5445-4c4c-495f-524f-434b535f2011, aa 0f 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 a5)
+DEBUG   A4:C1:38:5A:20:A1: <<< received notification with device data(aa 0f a1 20 5a 38 c1 a4 00 00 00 00 00 00 00 00 00 00 00 23)
 ```
 
 # Calibration
