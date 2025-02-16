@@ -9,6 +9,11 @@ Install the python module [bleak](https://bleak.readthedocs.io/en/latest/)
 $ pip install bleak
 ```
 
+or globally for all users (maybe also required on Raspberry Pi OS)
+```
+sudo apt install python3-bleak
+```
+
 ## Help
 ```
 $ ./govee-h5075.py --help
