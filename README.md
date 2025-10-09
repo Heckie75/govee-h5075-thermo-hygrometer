@@ -18,7 +18,9 @@ sudo apt install python3-bleak
 ```
 $ ./govee-h5075.py --help
 usage: govee-h5075.py [-h] [-a ADDRESS] [-s] [-m] [--status] [-i] [--set-humidity-alarm "<on|off> <lower> <upper>"] [--set-temperature-alarm "<on|off> <lower> <upper>"]
-                      [--set-humidity-offset <offset>] [--set-temperature-offset <offset>] [-d] [--start <hhh:mm>] [--end <hhh:mm>] [-j] [-l {DEBUG,INFO,WARN,ERROR}]
+                      [--set-humidity-offset <offset>] [--set-temperature-offset <offset>] [-d] [--start <hhh:mm>] [--end <hhh:mm>] [-j]
+                      [--device-type "DeviceType"]
+                      [-l {DEBUG,INFO,WARN,ERROR}]
 
 Shell script in order to request Govee H5075 temperature humidity sensor
 
@@ -314,6 +316,28 @@ $ govee-h5075.py -a Bedroom -d --start 0:20 --end 0:10 -j
     "steamPressure": 10.8
   }
 ]
+```
+
+or for a Govee H5179
+
+```
+./govee-h5075.py -a "1C:9F:24:E2:AB:C6" --data --start 0:10
+
+2025-03-18 18:57  6.4°C       5.3°C     43.5°F       41.5°F     92.7%          6.9 g/m³      8.9 mbar
+2025-03-18 18:56  6.5°C       5.4°C     43.7°F       41.7°F     92.7%          7.0 g/m³      8.9 mbar
+2025-03-18 18:55  6.5°C       5.4°C     43.7°F       41.7°F     92.8%          7.0 g/m³      8.9 mbar
+2025-03-18 18:54  6.5°C       5.4°C     43.7°F       41.7°F     92.8%          7.0 g/m³      8.9 mbar
+2025-03-18 18:53  6.5°C       5.4°C     43.7°F       41.7°F     92.8%          7.0 g/m³      8.9 mbar
+2025-03-18 18:52  6.6°C       5.5°C     43.9°F       41.9°F     92.8%          7.0 g/m³      9.0 mbar
+2025-03-18 18:51  6.6°C       5.5°C     43.9°F       41.9°F     92.8%          7.0 g/m³      9.0 mbar
+2025-03-18 18:50  6.6°C       5.5°C     43.9°F       41.9°F     92.8%          7.0 g/m³      9.0 mbar
+2025-03-18 18:49  6.6°C       5.5°C     43.9°F       41.9°F     92.8%          7.0 g/m³      9.0 mbar
+2025-03-18 18:48  6.6°C       5.5°C     43.9°F       41.9°F     92.9%          7.0 g/m³      9.0 mbar
+2025-03-18 18:47  6.6°C       5.5°C     43.9°F       41.9°F     92.8%          7.0 g/m³      9.0 mbar
+2025-03-18 18:46  6.6°C       5.5°C     43.9°F       41.9°F     92.8%          7.0 g/m³      9.0 mbar
+2025-03-18 18:45  6.7°C       5.6°C     44.1°F       42.1°F     92.8%          7.1 g/m³      9.1 mbar
+2025-03-18 18:44  6.7°C       5.6°C     44.1°F       42.1°F     92.9%          7.1 g/m³      9.1 mbar
+2025-03-18 18:43  6.7°C       5.6°C     44.1°F       42.1°F     92.9%          7.1 g/m³      9.1 mbar
 ```
 
 ## Configure device
