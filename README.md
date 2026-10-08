@@ -2,6 +2,18 @@
 
 Shell script and python lib for Govee H5075 thermometer / hygrometer for Linux, Raspberry Pis and Windows.
 
+Also supports **H5074**, **H5179**, and **H5104** (advertisement scan/measure plus GATT status, info, history, and configuration). H5104 uses manufacturer ID `0x0001` with the same packed temperature/humidity encoding as H5075; GATT commands mirror the H5075 path and should be verified on a real H5104 unit.
+
+H5104 units may use MAC prefixes other than the older Govee `A4:C1:38` OUI (for example `CF:35:33:...`). Scan matching therefore also accepts devices whose advertised name contains `H5104`.
+
+### Connecting with `-a` / `-i` on Linux (BlueZ)
+
+Advertisement scan (`-s` / `-m`) and GATT connect (`-a ... -i`) cannot share the adapter cleanly. If you see blank errors, `failed to discover services`, or `Operation already in progress`:
+
+1. Stop any continuous measure session (`-m`) with Ctrl+C.
+2. Reset the adapter: `bluetoothctl power off && bluetoothctl power on`
+3. Retry: `./govee-h5075.py -a CF:35:33:35:68:1F -i`
+
 ## Preconditions
 Install the python module [bleak](https://bleak.readthedocs.io/en/latest/)
 
@@ -22,7 +34,7 @@ usage: govee-h5075.py [-h] [-a ADDRESS] [-s] [-m] [--status] [-i] [--set-humidit
                       [--device-type "DeviceType"]
                       [-l {DEBUG,INFO,WARN,ERROR}]
 
-Shell script in order to request Govee H5075 temperature humidity sensor
+Shell script in order to request Govee H5075/H5074/H5179/H5104 temperature humidity sensors
 
 options:
   -h, --help            show this help message and exit
